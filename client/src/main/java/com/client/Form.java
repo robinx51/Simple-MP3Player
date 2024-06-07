@@ -225,11 +225,9 @@ public class Form extends javax.swing.JFrame {
         if (client.songList.containsKey(currentSong + 1)) {
             songSlider.setValue(0);
             String path = client.songList.get(++currentSong);
+            songLabel.setText(path);
             player.play(path);
             songJList.setSelectedIndex(currentSong);
-        } else {
-            songSlider.setValue(0);
-            playButton.setIcon(playIcon);
         }
     }//GEN-LAST:event_nextButtonActionPerformed
 
@@ -252,6 +250,7 @@ public class Form extends javax.swing.JFrame {
         if (client.songList.containsKey(currentSong - 1)) {
             songSlider.setValue(0);
             String path = client.songList.get(--currentSong);
+            songLabel.setText(path);
             player.play(path);
             songJList.setSelectedIndex(currentSong);
         }
