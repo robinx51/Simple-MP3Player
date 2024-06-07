@@ -2,19 +2,22 @@ package com.client;
 
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.advanced.AdvancedPlayer;
-import javazoom.jl.player.advanced.PlaybackEvent;
-import javazoom.jl.player.advanced.PlaybackListener;
+
+import org.jaudiotagger.audio.*;
+import org.jaudiotagger.audio.exceptions.*;
+
 import java.io.*;
+import org.jaudiotagger.tag.TagException;
 
 public class MP3Player {
     private AdvancedPlayer player;
     private FileInputStream fis;
-    private Thread playThread;
-    private volatile boolean isPaused = true;
+    private boolean isPaused = true;
     private long totalFrames;
     private int pausedFrame;
     private final String folder = "songs/";
     private String filePath;
+    
 
     public void play(String filePath) {
         this.filePath = filePath;
@@ -25,20 +28,20 @@ public class MP3Player {
             
             fis = new FileInputStream(file);
             player = new AdvancedPlayer(fis);
+            
             isPaused = false;
-            playThread = new Thread(() -> {
+            new Thread(() -> {
                 try {
                     player.play(pausedFrame, Integer.MAX_VALUE);
                 } catch (JavaLayerException e) {
                     System.out.println(e.getMessage());
                 }
-            });
-            playThread.start();
+            }).start();
         } catch (JavaLayerException | IOException e) {
             System.out.println(e.getMessage());
         }
     }
-
+    
     public void pause() {
         if (!isPaused) {
             isPaused = true;
@@ -54,24 +57,62 @@ public class MP3Player {
 
     public void resume() {
         if (isPaused) {
-            isPaused = false;
             try {
                 fis = new FileInputStream(folder + filePath);
                 player = new AdvancedPlayer(fis);
                 // Пропускаем байты, чтобы возобновить воспроизведение с сохраненной позиции
                 fis.skip(totalFrames - pausedFrame);
-                playThread = new Thread(() -> {
+                new Thread(() -> {
                     try {
                         player.play();
                     } catch (JavaLayerException e) {
                         System.out.println(e.getMessage());
                     }
-                });
-                playThread.start();
+                }).start();
+                isPaused = false;
             } catch (IOException | JavaLayerException e) {
                 System.out.println(e.getMessage());
             }
         }
+    }
+    
+    public void seek(int seconds) {
+        int framesPerSecond = (int) (totalFrames / getDuration());
+        int frame = framesPerSecond * seconds;
+         
+        if (player != null && fis != null) {
+            try {
+                player.close();
+                fis.close();
+                fis = new FileInputStream(folder + filePath);
+                player = new AdvancedPlayer(fis);
+                
+                fis.skip(frame);
+                new Thread(() -> {
+                    try {
+                        player.play();
+                    } catch (JavaLayerException e) {
+                        System.out.println(e.getMessage());
+                    }
+                }).start();
+                isPaused = false;
+            } catch (JavaLayerException | IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+    
+    public int getDuration() {
+        try {
+            File audioFile = new File(folder + filePath);
+            AudioFile f = AudioFileIO.read(audioFile);
+            int duration = f.getAudioHeader().getTrackLength();
+            
+            return duration;
+        } catch (CannotReadException | IOException | TagException | InvalidAudioFrameException | ReadOnlyFileException e) {
+            System.out.println(e.getMessage());
+        }
+        return 0;
     }
 
     public void close() {
@@ -87,4 +128,5 @@ public class MP3Player {
             System.out.println(e.getMessage());
         }
     }
+    
 }

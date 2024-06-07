@@ -129,7 +129,9 @@ public class Client {
                 } else if (message.equals("stop")) {
                     player.close();
                 } else if (message.startsWith("get ")) sendMessage(message);
-                else if (message.equals("close")) {
+                else if (message.startsWith("seek ") ) {
+                    player.seek(Integer.parseInt(message.substring(5)));
+                } else if (message.equals("close")) {
                     sendMessage(message);
                     player.close();
                     break;
