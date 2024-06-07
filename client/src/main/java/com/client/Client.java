@@ -5,15 +5,32 @@ import java.net.*;
 import java.util.*;
 
 public class Client {
-    private static Socket socket;
-    private static final SortedMap<Integer, String> songList = new TreeMap<>();
+    private Socket socket;
+    public final SortedMap<Integer, String> songList = new TreeMap<>();
+    private final Form form;
     
-    private static void fillList(String message) {
+    public Client(Form form) {
+        this.form = form;
+        String serverAddress = "localhost";
+        int port = 8080;
+
+        try { 
+            socket = new Socket(serverAddress, port);
+            System.out.println("Подключено к серверу!");
+            RecievingMessageThread receive = new RecievingMessageThread();
+            receive.start();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        } 
+    }
+    
+    private void fillList(String message) {
         String[] songs = message.split("\n");
+        int num = 0;
         for (String song : songs) {
-            int num = Integer.parseInt(song.substring(0, song.indexOf(". ") ) );
-            songList.put(num, song.substring(song.indexOf(". ") + 2));
+            songList.put(num++, song);
         }
+        form.setList();
         
 //        File folder = new File("songs");
 //        
@@ -33,7 +50,7 @@ public class Client {
 //        }
     }
     
-    public static class RecievingMessageThread extends Thread {
+    public class RecievingMessageThread extends Thread {
         public RecievingMessageThread() {};
         String folder = "songs/";
         
@@ -92,53 +109,42 @@ public class Client {
         }
     }
     
-    private static void sendMessage(String message) throws IOException {
-        OutputStream os = socket.getOutputStream();
-        DataOutputStream dos = new DataOutputStream(os);
+    public void sendMessage(String message) throws IOException {
+        if (socket != null) {
+            OutputStream os = socket.getOutputStream();
+            DataOutputStream dos = new DataOutputStream(os);
 
-        byte[] messageBytes = message.getBytes("UTF-8");
-        int length = messageBytes.length;
+            byte[] messageBytes = message.getBytes("UTF-8");
+            int length = messageBytes.length;
 
-        dos.writeInt(length); // Отправляем длину сообщения
-        dos.write(messageBytes); // Отправляем само сообщение
-        dos.flush();
+            dos.writeInt(length); // Отправляем длину сообщения
+            dos.write(messageBytes); // Отправляем само сообщение
+            dos.flush();
+        }
     }
     
-    public static void main(String[] args) {
-        String serverAddress = "localhost";
-        int port = 8080;
-        Scanner console = new Scanner(System.in);
-
-        try { 
-            socket = new Socket(serverAddress, port);
-            System.out.println("Подключено к серверу!");
-            RecievingMessageThread receive = new RecievingMessageThread();
-            receive.start();
-            MP3Player player = new MP3Player();
-            
-            while (!socket.isClosed() ) {
-                // Отправка сообщения
-                String message = console.nextLine();
-                if (message.startsWith("play ")) {
-                    String path = songList.get(Integer.valueOf(message.substring(5)));
-                    player.play(path);
-                } else if (message.equals("pause")) {
-                    player.pause();
-                } else if (message.equals("resume")){
-                    player.resume();
-                } else if (message.equals("stop")) {
-                    player.close();
-                } else if (message.startsWith("get ")) sendMessage(message);
-                else if (message.startsWith("seek ") ) {
-                    player.seek(Integer.parseInt(message.substring(5)));
-                } else if (message.equals("close")) {
-                    sendMessage(message);
-                    player.close();
-                    break;
-                } else System.out.println("Необработанное сообщение");
-            }
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        } 
-    }
+//    public void run(){
+//        Scanner console = new Scanner(System.in);
+//        while (!socket.isClosed() ) {
+//            // Отправка сообщения
+//            String message = console.nextLine();
+//            if (message.startsWith("play ")) {
+//                String path = songList.get(Integer.valueOf(message.substring(5)));
+//                player.play(path);
+//            } else if (message.equals("pause")) {
+//                player.pause();
+//            } else if (message.equals("resume")){
+//                player.resumeSong();
+//            } else if (message.equals("stop")) {
+//                player.close();
+//            } else if (message.startsWith("get ")) sendMessage(message);
+//            else if (message.startsWith("seek ") ) {
+//                player.seek(Integer.parseInt(message.substring(5)));
+//            } else if (message.equals("close")) {
+//                sendMessage(message);
+//                player.close();
+//                break;
+//            } else System.out.println("Необработанное сообщение");
+//        }
+//    }
 }

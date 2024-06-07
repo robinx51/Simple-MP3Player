@@ -86,7 +86,7 @@ public class ClientThread extends Thread {
     
     public String createSongList() {
         StringBuilder message = new StringBuilder();
-        songList.forEach((key, value) -> message.append(key).append(". ").append(value).append("\n"));
+        songList.forEach((key, value) -> message.append(value).append("\n"));
         return message.toString();
     }
     
