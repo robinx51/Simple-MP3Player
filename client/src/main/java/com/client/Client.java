@@ -55,14 +55,12 @@ public class Client {
     }
     
     public class RecievingMessageThread extends Thread {
-        public RecievingMessageThread() {};
-        String folder = "songs/";
-        
         @Override
         public void run() {
             try {
                 InputStream is = socket.getInputStream();
                 DataInputStream dis = new DataInputStream(is);
+                String folder = "songs/";
                 while (!socket.isClosed() ) {
                     try {
                         String header = dis.readUTF(); // Чтение заголовка

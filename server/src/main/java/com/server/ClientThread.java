@@ -5,10 +5,9 @@ import java.net.*;
 import java.util.SortedMap;
 
 public class ClientThread extends Thread {
-    Socket socket;
-    SortedMap<Integer, String> songList;
-    Integer port;
-    String directory = "songs/";
+    private final Socket socket;
+    private final SortedMap<Integer, String> songList;
+    private final int port;
     
     public ClientThread(Socket socket, SortedMap<Integer, String> songList) {
         this.socket = socket;
@@ -49,6 +48,7 @@ public class ClientThread extends Thread {
     private void sendFile(Integer number) throws IOException {
         OutputStream os = socket.getOutputStream();
         DataOutputStream dos = new DataOutputStream(os);
+        String directory = "songs/";
         File file = new File(directory + songList.get(number));
 
         dos.writeUTF("FILE"); // Заголовок для файла
@@ -84,7 +84,7 @@ public class ClientThread extends Thread {
         }
     }
     
-    public String createSongList() {
+    private String createSongList() {
         StringBuilder message = new StringBuilder();
         songList.forEach((key, value) -> message.append(value).append("\n"));
         return message.toString();

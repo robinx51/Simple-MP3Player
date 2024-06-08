@@ -5,7 +5,6 @@ import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 
 public class Form extends javax.swing.JFrame {
-    private final DefaultListModel model;
     private final Client client;
     private final MP3Player player;
     
@@ -15,7 +14,6 @@ public class Form extends javax.swing.JFrame {
     
     public Form() {
         initComponents();
-        model = new DefaultListModel();
         client = new Client(this);
         player = new MP3Player(this);
         
@@ -38,13 +36,14 @@ public class Form extends javax.swing.JFrame {
         downloadButton.setIcon(downIcon);
     }
     
-    private static ImageIcon resizeIcon(ImageIcon icon, int width, int height) {
+    private ImageIcon resizeIcon(ImageIcon icon, int width, int height) {
         Image img = icon.getImage();
         Image newImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
         return new ImageIcon(newImg);
     }
     
     public void setList() {
+        DefaultListModel model = new DefaultListModel();
         songJList.setModel(model);
         for (int i = 0; i < client.songList.size(); i++) {
             String song = client.songList.get(i);
