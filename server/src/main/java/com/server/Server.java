@@ -13,7 +13,7 @@ public class Server{
             File[] files = folder.listFiles();
 
             if (files != null) {
-                int index = 1;
+                int index = 0;
                 for (File file : files) {
                     if (file.isFile() && file.getName().endsWith(".mp3")) {
                         songList.put(index++, file.getName());

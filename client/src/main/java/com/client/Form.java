@@ -1,7 +1,6 @@
 package com.client;
 
 import java.awt.Image;
-import java.io.IOException;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 
@@ -24,16 +23,19 @@ public class Form extends javax.swing.JFrame {
         pauseIcon = new ImageIcon("icons/pause.png");
         ImageIcon prevIcon = new ImageIcon("icons/prev.png");
         ImageIcon nextIcon = new ImageIcon("icons/next.png");
+        ImageIcon downIcon = new ImageIcon("icons/download.png");
 
         // Изменение размеров иконок до 32x32 пикселей
         playIcon = resizeIcon(playIcon, 32, 32);
         pauseIcon = resizeIcon(pauseIcon, 32, 32);
         prevIcon = resizeIcon(prevIcon, 32, 32);
         nextIcon = resizeIcon(nextIcon, 32, 32);
+        downIcon = resizeIcon(downIcon, 20, 20);
         
         playButton.setIcon(playIcon);
         prevButton.setIcon(prevIcon);
         nextButton.setIcon(nextIcon);
+        downloadButton.setIcon(downIcon);
     }
     
     private static ImageIcon resizeIcon(ImageIcon icon, int width, int height) {
@@ -48,8 +50,26 @@ public class Form extends javax.swing.JFrame {
             String song = client.songList.get(i);
             model.addElement(song);
         }
+        checkSong(client.songList.get(currentSong));
     }
-
+    
+    public void checkSong(String name) {
+        songLabel.setText(client.songList.get(currentSong));
+        if (client.checkList(name)) {
+            songSlider.setEnabled(true);
+            prevButton.setEnabled(true);
+            playButton.setEnabled(true);
+            nextButton.setEnabled(true);
+            downloadButton.setEnabled(false);
+        } else {
+            songSlider.setEnabled(false);
+            prevButton.setEnabled(false);
+            playButton.setEnabled(false);
+            nextButton.setEnabled(false);
+            downloadButton.setEnabled(true);
+        }
+    }
+    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -62,6 +82,7 @@ public class Form extends javax.swing.JFrame {
         prevButton = new javax.swing.JButton();
         nextButton = new javax.swing.JButton();
         songSlider = new javax.swing.JSlider();
+        downloadButton = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         songLabel = new javax.swing.JLabel();
 
@@ -128,6 +149,13 @@ public class Form extends javax.swing.JFrame {
             }
         });
 
+        downloadButton.setToolTipText("Загрузить песню");
+        downloadButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                downloadButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -143,7 +171,9 @@ public class Form extends javax.swing.JFrame {
                         .addComponent(playButton, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(nextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(97, 97, 97)))
+                        .addGap(37, 37, 37)
+                        .addComponent(downloadButton, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(28, 28, 28)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -156,7 +186,8 @@ public class Form extends javax.swing.JFrame {
                     .addComponent(prevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addComponent(playButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(nextButton, javax.swing.GroupLayout.DEFAULT_SIZE, 44, Short.MAX_VALUE)))
+                        .addComponent(nextButton, javax.swing.GroupLayout.DEFAULT_SIZE, 44, Short.MAX_VALUE))
+                    .addComponent(downloadButton, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -219,10 +250,11 @@ public class Form extends javax.swing.JFrame {
         playButton.setIcon(playIcon);
         songSlider.setValue(0);
         currentSong = songJList.getSelectedIndex();
+        checkSong(client.songList.get(currentSong));
     }//GEN-LAST:event_songJListMouseClicked
 
     private void nextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextButtonActionPerformed
-        if (client.songList.containsKey(currentSong + 1)) {
+        if (client.songList.containsKey(currentSong + 1) && client.checkList(client.songList.get(currentSong + 1))) {
             songSlider.setValue(0);
             String path = client.songList.get(++currentSong);
             songLabel.setText(path);
@@ -247,7 +279,7 @@ public class Form extends javax.swing.JFrame {
     }//GEN-LAST:event_playButtonActionPerformed
 
     private void prevButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevButtonActionPerformed
-        if (client.songList.containsKey(currentSong - 1)) {
+        if (client.songList.containsKey(currentSong - 1) && client.checkList(client.songList.get(currentSong - 1))) {
             songSlider.setValue(0);
             String path = client.songList.get(--currentSong);
             songLabel.setText(path);
@@ -257,12 +289,8 @@ public class Form extends javax.swing.JFrame {
     }//GEN-LAST:event_prevButtonActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        try {
-            client.sendMessage("close");
-            player.close();
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        } 
+        client.sendMessage("close");
+        player.close();
     }//GEN-LAST:event_formWindowClosing
 
     private void songSliderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_songSliderMouseReleased
@@ -270,7 +298,12 @@ public class Form extends javax.swing.JFrame {
         player.seek(value);
     }//GEN-LAST:event_songSliderMouseReleased
 
+    private void downloadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadButtonActionPerformed
+        client.sendMessage("get " + currentSong);
+    }//GEN-LAST:event_downloadButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton downloadButton;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;

@@ -7,6 +7,7 @@ import java.util.*;
 public class Client {
     private Socket socket;
     public final SortedMap<Integer, String> songList = new TreeMap<>();
+    public final LinkedList<String> fileList = new LinkedList<>();
     private final Form form;
     
     public Client(Form form) {
@@ -19,12 +20,13 @@ public class Client {
             System.out.println("Подключено к серверу!");
             RecievingMessageThread receive = new RecievingMessageThread();
             receive.start();
+            
         } catch (IOException e) {
             System.out.println(e.getMessage());
         } 
     }
     
-    private void fillList(String message) {
+    private void fillLists(String message) {
         String[] songs = message.split("\n");
         int num = 0;
         for (String song : songs) {
@@ -32,22 +34,24 @@ public class Client {
         }
         form.setList();
         
-//        File folder = new File("songs");
-//        
-//        if (folder.exists() && folder.isDirectory()) {
-//            File[] files = folder.listFiles();
-//
-//            if (files != null) {
-//                int index = 1;
-//                for (File file : files) {
-//                    if (file.isFile() && file.getName().endsWith(".mp3")) {
-//                        songList.put(index++, file.getName());
-//                    }
-//                }
-//            }
-//        } else {
-//            System.out.println("Папка \"songs\" не существует или не является директорией.");
-//        }
+        File folder = new File("songs");
+        if (folder.exists() && folder.isDirectory()) {
+            File[] files = folder.listFiles();
+
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().endsWith(".mp3")) {
+                        fileList.add(file.getName());
+                    }
+                }
+            }
+        } else {
+            System.out.println("Папка \"songs\" не существует или не является директорией.");
+        } 
+    }
+    
+    public boolean checkList(String name) {
+        return fileList.contains(name);
     }
     
     public class RecievingMessageThread extends Thread {
@@ -85,6 +89,8 @@ public class Client {
                                             totalBytesRead += bytesRead;
                                         }
                                         System.out.println("Файл получен и сохранен как " + fileName);
+                                        fileList.add(fileName);
+                                        form.checkSong(fileName);
                                     }
                             }
                             case "LIST" -> {
@@ -92,7 +98,7 @@ public class Client {
                                 byte[] messageBytes = new byte[length];
                                 dis.readFully(messageBytes); // Чтение сообщения
                                 String message = new String(messageBytes, "UTF-8");
-                                fillList(message);
+                                fillLists(message);
                                 System.out.println("Сообщение от сервера:\n" + message);
                             }
                             default -> System.out.println("Неизвестный заголовок: " + header);
@@ -109,42 +115,21 @@ public class Client {
         }
     }
     
-    public void sendMessage(String message) throws IOException {
-        if (socket != null) {
-            OutputStream os = socket.getOutputStream();
-            DataOutputStream dos = new DataOutputStream(os);
+    public void sendMessage(String message) {
+        try{ 
+            if (socket != null) {
+                OutputStream os = socket.getOutputStream();
+                DataOutputStream dos = new DataOutputStream(os);
 
-            byte[] messageBytes = message.getBytes("UTF-8");
-            int length = messageBytes.length;
+                byte[] messageBytes = message.getBytes("UTF-8");
+                int length = messageBytes.length;
 
-            dos.writeInt(length); // Отправляем длину сообщения
-            dos.write(messageBytes); // Отправляем само сообщение
-            dos.flush();
+                dos.writeInt(length); // Отправляем длину сообщения
+                dos.write(messageBytes); // Отправляем само сообщение
+                dos.flush();
+            }
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
         }
     }
-    
-//    public void run(){
-//        Scanner console = new Scanner(System.in);
-//        while (!socket.isClosed() ) {
-//            // Отправка сообщения
-//            String message = console.nextLine();
-//            if (message.startsWith("play ")) {
-//                String path = songList.get(Integer.valueOf(message.substring(5)));
-//                player.play(path);
-//            } else if (message.equals("pause")) {
-//                player.pause();
-//            } else if (message.equals("resume")){
-//                player.resumeSong();
-//            } else if (message.equals("stop")) {
-//                player.close();
-//            } else if (message.startsWith("get ")) sendMessage(message);
-//            else if (message.startsWith("seek ") ) {
-//                player.seek(Integer.parseInt(message.substring(5)));
-//            } else if (message.equals("close")) {
-//                sendMessage(message);
-//                player.close();
-//                break;
-//            } else System.out.println("Необработанное сообщение");
-//        }
-//    }
 }
